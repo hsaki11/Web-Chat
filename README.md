@@ -143,17 +143,6 @@ To add accounts, edit the `USERS` object in `server.js`.
 
 ---
 
-## ⚠️ Railway Free Tier Limits
-
-| 項目 Item           | 免費方案 Free Plan |
-|---------------------|-------------------|
-| 每月運行時數 Hours   | 500 hr/month      |
-| 記憶體 Memory        | 512 MB            |
-| 同時連線 Connections | 無硬性限制         |
-| 自訂網域 Custom Domain | 需付費方案       |
-
----
-
 ## 📄 License
 
 GPL-3.0 © 2024
