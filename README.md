@@ -9,26 +9,21 @@
 ![License](https://img.shields.io/badge/License-GPL--3.0-00ff41?style=flat-square)
 
 ---
-╔══════════════════════════════════════════╗
-║      ██████╗  ██████╗  ██████╗           ║
-║      ██╔══██╗██╔═══██╗██╔════╝           ║
-║      ██████╔╝██║   ██║██║                ║
-║      ██╔══██╗██║   ██║██║                ║
-║      ██████╔╝╚██████╔╝╚██████╗           ║
-║      ╚═════╝  ╚═════╝  ╚═════╝           ║
-║                                          ║
-║        BUFFER OVERFLOW CREW              ║
-║        ─────────────────────             ║
-║                                          ║
-║  HazukiSaki                             ║
-║  KATO                                    ║
-║  $TEAKqwq                                ║
-║  RET2L!BC                                ║
-║  Dr.GG                                   ║
-║                                          ║
-║  [ elite digital underground collective ]║
-╚══════════════════════════════════════════╝
+▓▒░ B U F F E R  O V E R F L O W ░▒▓
 
+      B O C  //  N E T W O R K
+
+      H u s z u k i S a k i
+      K A T O
+      $ T E A K q w q
+      R E T 2 L ! B C
+      D r . G G
+
+:::::: SIGNAL DETECTED ::::::
+:::::: MEMORY FRAGMENT ::::::
+
+wired::connected
+self::undefined
 ---
 
 
