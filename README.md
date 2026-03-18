@@ -19,11 +19,6 @@
       R E T 2 L ! B C
       D r . G G
 
-:::::: SIGNAL DETECTED ::::::
-:::::: MEMORY FRAGMENT ::::::
-
-wired::connected
-self::undefined
 ---
 
 
