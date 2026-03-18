@@ -1,1 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web-Chat-</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0a0a0a;min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    font-family:'Courier New',Courier,monospace;padding:16px;overflow:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:100;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.015) 2px,rgba(0,255,65,.015) 4px);
+  }
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:101;
+    background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.88) 100%);
+  }
+  .wrap{display:flex;gap:12px;width:100%;max-width:900px;position:relative;z-index:10;}
+  .terminal{
+    flex:1;border:1px solid #00ff4133;border-radius:4px;overflow:hidden;
+    box-shadow:0 0 40px #00ff4122,0 0 80px #00ff4108;transition:filter .05s;
+  }
+  .terminal.glitch{filter:hue-rotate(90deg) brightness(1.3);}
+  .titlebar{
+    background:#111;border-bottom:1px solid #00ff4133;
+    padding:7px 14px;display:flex;align-items:center;gap:8px;user-select:none;
+  }
+  .dot{font-size:11px;letter-spacing:2px;}
+  .dot.r{color:#ff0055}.dot.y{color:#ffe600}.dot.g{color:#00ff41}
+  .title-text{color:#00ff4188;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-left:10px;}
+  .live{margin-left:auto;color:#00ff41;font-size:10px;letter-spacing:2px;animation:blink 1.4s step-end infinite;display:none;}
+  .live.show{display:inline;}
+  .output{
+    background:#0c0c0c;color:#00ff41;font-size:13px;line-height:1.7;
+    padding:16px;height:430px;overflow-y:auto;word-break:break-word;
+  }
+  .output::-webkit-scrollbar{width:4px}
+  .output::-webkit-scrollbar-track{background:#0a0a0a}
+  .output::-webkit-scrollbar-thumb{background:#00ff4133;border-radius:2px}
+  .l-sys{color:#00ff41aa}
+  .l-err{color:#ff0055cc}
+  .l-ok{color:#00ff41}
+  .l-chat{margin-top:3px}
+  .l-sys-chat{color:#00ff4155;font-style:italic}
+  .input-row{
+    background:#0c0c0c;border-top:1px solid #00ff4133;
+    padding:10px 16px;display:flex;align-items:center;gap:6px;
+  }
+  .prompt{color:#00ff41;font-size:13px;white-space:nowrap;text-shadow:0 0 8px #00ff4188;transition:color .3s,text-shadow .3s;}
+  input{flex:1;background:transparent;border:none;outline:none;color:#e0ffe8;font-size:13px;font-family:inherit;caret-color:transparent;}
+  .cur{width:10px;height:16px;background:#00ff41;box-shadow:0 0 6px #00ff41;animation:blink 1s step-end infinite;flex-shrink:0;}
+  .sidebar{
+    width:155px;flex-shrink:0;border:1px solid #00ff4133;border-radius:4px;
+    background:#0c0c0c;padding:10px;display:none;align-self:flex-start;
+  }
+  .sidebar.show{display:block;}
+  .sb-title{color:#00ff4166;font-size:10px;letter-spacing:3px;border-bottom:1px solid #00ff4133;padding-bottom:6px;margin-bottom:8px;}
+  .sb-user{font-size:12px;padding:3px 0;letter-spacing:1px;}
+  .sb-user small{font-size:9px;color:#ffffff44;margin-left:4px;}
+  .statusbar{margin-top:10px;color:#00ff4144;font-size:11px;letter-spacing:2px;text-align:center;position:relative;z-index:10;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="terminal" id="terminal">
+    <div class="titlebar">
+      <span class="dot r">●</span><span class="dot y">●</span><span class="dot g">●</span>
+      <span class="title-text" id="titleText">WEB-CHAT- — AWAITING AUTH</span>
+      <span class="live" id="liveBadge">▶ LIVE</span>
+    </div>
+    <div class="output" id="output"></div>
+    <div class="input-row">
+      <span class="prompt" id="prompt">login: </span>
+      <input type="text" id="inputBox" autocomplete="off" spellcheck="false" autofocus />
+      <div class="cur"></div>
+    </div>
+  </div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-title">ONLINE</div>
+    <div id="userList"></div>
+  </div>
+</div>
+<div class="statusbar" id="statusbar">INITIALIZING...</div>
 
+<script>
+// ── WebSocket 自動偵測網址 ─────────────────────────────────────────────────
+// 部署到 Railway 後不需要改任何東西，自動連線
+const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host;
+
+// ── State ─────────────────────────────────────────────────────────────────
+let ws, phase = "boot", typedUser = "", myUser = null, myColor = "#00ff41";
+
+const $  = id => document.getElementById(id);
+const out = $("output"), inp = $("inputBox"), pmt = $("prompt");
+const sb  = $("statusbar"), title = $("titleText"), live = $("liveBadge");
+const sidebar = $("sidebar"), ulist = $("userList"), term = $("terminal");
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function print(text, cls="l-sys"){
+  String(text).split("\n").forEach(l=>{
+    const d=document.createElement("div");
+    d.className=cls; d.textContent=l; out.appendChild(d);
+  });
+  out.scrollTop=out.scrollHeight;
+}
+
+function printChat(user,color,text){
+  const now=new Date().toLocaleTimeString("en-GB",{hour12:false});
+  const d=document.createElement("div"); d.className="l-chat";
+  d.innerHTML=`<span style="color:${color};text-shadow:0 0 8px ${color}55;font-weight:bold">[${now}] ${esc(user.toUpperCase())}</span>`+
+              `<span style="color:#00ff4155"> ▶ </span>`+
+              `<span style="color:#e0ffe8">${esc(text)}</span>`;
+  out.appendChild(d); out.scrollTop=out.scrollHeight;
+}
+
+function setPrompt(text,color){
+  pmt.textContent=text;
+  pmt.style.color=color;
+  pmt.style.textShadow=`0 0 8px ${color}88`;
+}
+
+// ── Glitch ────────────────────────────────────────────────────────────────
+(function glitch(){
+  setTimeout(()=>{
+    term.classList.add("glitch");
+    setTimeout(()=>term.classList.remove("glitch"),150);
+    glitch();
+  }, 5000+Math.random()*9000);
+})();
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+function connect(){
+  print("Connecting to server...","l-sys");
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen=()=>{
+    print("[ OK ] Connection established","l-ok");
+    print("","l-sys");
+    sb.textContent="CONNECTED — NOT AUTHENTICATED";
+    phase="login_user";
+    setPrompt("login: ","#00ff41");
+    print("Enter username:","l-sys");
+  };
+
+  ws.onmessage=e=>{
+    let msg; try{msg=JSON.parse(e.data);}catch{print(e.data);return;}
+    handle(msg);
+  };
+
+  ws.onclose=()=>{
+    live.classList.remove("show"); sidebar.classList.remove("show");
+    if(phase==="chat") print("\n[ DISCONNECT ] Connection lost. Reconnecting...","l-err");
+    phase="boot";
+    setTimeout(connect,3000);
+  };
+
+  ws.onerror=()=>{
+    print("[ ERR ] WebSocket error","l-err");
+    sb.textContent="CONNECTION ERROR";
+  };
+}
+
+function handle(msg){
+  switch(msg.type){
+    case "system": print(msg.content,"l-sys"); break;
+
+    case "auth_ok":
+      myUser=msg.user; myColor=msg.color; phase="chat";
+      print("","l-sys");
+      print("[ OK ] AUTHENTICATED","l-ok");
+      print(`[ OK ] Welcome, ${myUser.toUpperCase()} [${msg.role}]`,"l-ok");
+      print("Type /help for commands","l-sys");
+      print("","l-sys");
+      setPrompt(`${myUser}@SECURE:~$ `,myColor);
+      title.textContent=`WEB-CHAT- — ${myUser.toUpperCase()} — CONNECTED`;
+      live.classList.add("show"); sidebar.classList.add("show");
+      sb.textContent="CHANNEL: #general  ·  ENC: ON";
+      break;
+
+    case "message":
+      if(msg.user==="SYSTEM") print(msg.content,"l-sys-chat");
+      else printChat(msg.user,msg.color,msg.content);
+      break;
+
+    case "userlist":
+      ulist.innerHTML="";
+      msg.users.forEach(u=>{
+        const d=document.createElement("div"); d.className="sb-user";
+        d.innerHTML=`<span style="color:${u.color};text-shadow:0 0 6px ${u.color}44">◉ ${esc(u.name.toUpperCase())}</span><small>${u.role}</small>`;
+        ulist.appendChild(d);
+      });
+      sb.textContent=`CHANNEL: #general  ·  ONLINE: ${msg.users.length}  ·  ENC: ON`;
+      break;
+
+    case "pong": print("PONG — server alive","l-ok"); break;
+  }
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────
+inp.addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  const val=inp.value.trim(); inp.value="";
+  if(!val) return;
+
+  if(phase==="login_user"){
+    typedUser=val.toLowerCase();
+    print(`> ${typedUser}`,"l-ok");
+    print("Enter password:","l-sys");
+    inp.type="password"; phase="login_pass"; return;
+  }
+  if(phase==="login_pass"){
+    print(`> ${"*".repeat(val.length)}`,"l-ok");
+    inp.type="text";
+    ws.send(JSON.stringify({type:"login",user:typedUser,pass:val}));
+    phase="waiting"; return;
+  }
+  if(phase!=="chat") return;
+
+  // Echo
+  printChat(myUser,myColor,val);
+
+  // Commands
+  if(val.startsWith("/")){
+    const cmd=val.toLowerCase();
+    if(cmd==="/help"){
+      print(["─────────────────────────────────",
+             "  COMMANDS",
+             "─────────────────────────────────",
+             "  /users   — list online users",
+             "  /clear   — clear screen",
+             "  /whoami  — show my info",
+             "  /ping    — ping server",
+             "  /logout  — disconnect",
+             "─────────────────────────────────"].join("\n"),"l-sys");
+    } else if(cmd==="/clear"){
+      out.innerHTML="";
+    } else if(cmd==="/whoami"){
+      print(`USER: ${myUser}  COLOR: ${myColor}`,"l-sys");
+    } else if(cmd==="/ping"){
+      ws.send(JSON.stringify({type:"ping"}));
+    } else if(cmd==="/logout"){
+      ws.close(); phase="boot"; myUser=null;
+      out.innerHTML=""; setPrompt("login: ","#00ff41");
+      sidebar.classList.remove("show"); live.classList.remove("show");
+      title.textContent="WEB-CHAT- — AWAITING AUTH";
+      connect();
+    } else {
+      print(`[ ERR ] Unknown command: ${val}`,"l-err");
+    }
+    return;
+  }
+
+  ws.send(JSON.stringify({type:"chat",content:val}));
+});
+
+document.body.addEventListener("click",()=>inp.focus());
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+const BOOT=["BIOS v2.31.4 — initializing...","[ OK ] Kernel loaded","[ OK ] AES-256 active","[ OK ] Web-Chat- v1.0.0",""];
+let bi=0;
+(function bootLine(){
+  if(bi<BOOT.length){ print(BOOT[bi++],"l-sys"); setTimeout(bootLine,90+Math.random()*60); }
+  else connect();
+})();
+</script>
+</body>
+</html>
