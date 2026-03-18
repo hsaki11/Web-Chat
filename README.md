@@ -6,7 +6,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-ws%208.x-010101?style=flat-square)
 ![Deploy](https://img.shields.io/badge/Deploy-Railway-7B2CF7?style=flat-square&logo=railway&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-00ff41?style=flat-square)
+![License](https://img.shields.io/badge/License-GPL--3.0-00ff41?style=flat-square)
 
 ---
 
@@ -143,3 +143,20 @@ To add accounts, edit the `USERS` object in `server.js`.
 
 ---
 
+## ⚠️ Railway Free Tier Limits
+
+| 項目 Item           | 免費方案 Free Plan |
+|---------------------|-------------------|
+| 每月運行時數 Hours   | 500 hr/month      |
+| 記憶體 Memory        | 512 MB            |
+| 同時連線 Connections | 無硬性限制         |
+| 自訂網域 Custom Domain | 需付費方案       |
+
+---
+
+## 📄 License
+
+GPL-3.0 © 2024
+
+This project is licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).  
+本專案採用 GNU 通用公共授權條款 v3.0。
