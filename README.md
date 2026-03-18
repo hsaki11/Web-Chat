@@ -94,17 +94,6 @@ Share the URL with friends — open in any browser, no installation needed.
 
 ---
 
-## 🖥 Local Development 本機開發
-
-\`\`\`bash
-git clone https://github.com/your-username/hacker-chat.git
-cd hacker-chat
-npm install
-npm start
-# → http://localhost:8080
-\`\`\`
-
----
 
 ## 👤 Default Accounts 預設帳號
 
