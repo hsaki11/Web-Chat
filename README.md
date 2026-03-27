@@ -9,18 +9,6 @@
 ![License](https://img.shields.io/badge/License-GPL--3.0-00ff41?style=flat-square)
 
 ---
-  @ B U F F E R  O V E R F L O W @
-
-      B O C  //  N E T W O R K
-
-      H a z u k i S a k i
-      K A T O
-      $ T E A K q w q
-      R E T 2 L ! B C
-      D r . G G
-
----
-
 
 ## 📸 Preview
 
@@ -106,6 +94,17 @@ Share the URL with friends — open in any browser, no installation needed.
 
 ---
 
+## 🖥 Local Development 本機開發
+
+\`\`\`bash
+git clone https://github.com/your-username/hacker-chat.git
+cd hacker-chat
+npm install
+npm start
+# → http://localhost:8080
+\`\`\`
+
+---
 
 ## 👤 Default Accounts 預設帳號
 
@@ -141,6 +140,17 @@ To add accounts, edit the `USERS` object in `server.js`.
 { "type": "userlist", "users": [{ "name": "admin", "color": "#00ff41", "role": "ROOT" }] }
 { "type": "system",   "content": "[ OK ] Connection established" }
 \`\`\`
+
+---
+
+## ⚠️ Railway Free Tier Limits
+
+| 項目 Item           | 免費方案 Free Plan |
+|---------------------|-------------------|
+| 每月運行時數 Hours   | 500 hr/month      |
+| 記憶體 Memory        | 512 MB            |
+| 同時連線 Connections | 無硬性限制         |
+| 自訂網域 Custom Domain | 需付費方案       |
 
 ---
 
